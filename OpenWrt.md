@@ -263,9 +263,9 @@ scp -O -P XXX abc-sysupgrade.bin root@ip_target:/tmp
 Phân tích tham số:
 - `scp`: Secure Copy Protocol - công cụ copy file qua SSH
 - `-0`: Sử dụng protocol SCP cũ (legacy) thay vì SFTP mới (mặc định), vì một số thiết bị không hỗ trợ đầy đủ SFTP
-- `-P XXX`: Kết nối SSH qua port 62222 (thay vì port 22 mặc định) => giúp bảo mật hơn
+- `-P XXX`: Kết nối SSH qua port XXX (thay vì port mặc định) => giúp bảo mật hơn
 - `abc-sysupgrade.bin`: File firmware nguồn sau khi build
-- `root@ip_target`: Đăng nhập user root trên IP 192.168.2.1 (IP của AP)
+- `root@ip_target`: Đăng nhập user root trên IP target (IP của AP)
 - `:/tmp`: Thư mục đích trên AP để lưu file
 
 **2. Lệnh Minicom**
