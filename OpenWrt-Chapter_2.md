@@ -98,7 +98,7 @@ Sau khi trace source code của procd, em có vẽ lại được luồng xử l
 ![alt text](image/data_flow_procd.drawio.png)
 
 
-Hoạt động của `procd` được tổ chức như một máy trạng thái hữu hạn được định nghĩa trong các tệp nguồn (đáng chú ý là `/procd/state.c`). Trạng thái `procd` được thay đổi từ trạng thái đầu tiên cho đến trạng thái cuối cùng. Trạng thái hiện tại được đặt trong biến toàn cục state. Trạng thái có thể được thay đổi bằng cách gọi `procd_state_next()`. `procd` bao gồm 6 trạng thái:
+Hoạt động của `procd` được tổ chức gồm các **State machine** được định nghĩa trong các tệp nguồn (đáng chú ý là `/procd/state.c`). Trạng thái `procd` được thay đổi từ trạng thái đầu tiên cho đến trạng thái cuối cùng. Trạng thái hiện tại được đặt trong biến toàn cục state. Trạng thái có thể được thay đổi bằng cách gọi `procd_state_next()`. `procd` bao gồm 6 trạng thái:
 
 ![alt text](image/state_machine.drawio.png)
 
