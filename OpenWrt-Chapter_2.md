@@ -393,3 +393,107 @@ Với logic kiểm tra như sau:
 Procd chờ hết timeout, sau đó khởi động lại service bằng cách gọi `instance_start()` để fork() ra child process mới và reset monitoring.
 
 ### 3.5 How to reload a service
+Đối với **UCI config files**:
+```bash
+# UCI configs ở /etc/config/
+/etc/config/network
+/etc/config/wireless
+/etc/config/firewall
+/etc/config/dhcp
+```
+Service sẽ tự động reload nếu có triggers khi `uci commit` (procd biết khi nào config thay đổi qua ubus events)
+
+Đối với **Non-UCI config files**:
+```bash
+# Native config files của applications
+/etc/nginx/nginx.conf
+/etc/bind/named.conf
+/etc/squid/squid.conf
+/etc/openvpn/server.conf
+```
+Service sẽ không tự reload mà phải tự **manual reload** sau khi chỉnh sửa (procd không biết khi files này thay đổi)
+
+#### a. Manual reload cho Non-UCI config files
+Như đã nói ở trên, một số service sử dụng config files riêng (Non-UCI config files) nên không có events tự động khi config files đó thay đổi, nên cần thêm script để procd theo dõi file thủ công:
+```bash
+start_service() {
+    procd_open_instance
+    procd_set_param command /usr/bin/myservice
+    
+    # Procd sẽ theo dõi file này
+    procd_set_param file /etc/foo.conf
+    
+    procd_close_instance
+}
+```
+Lúc này procd mới có thể biết được khi nào file thay đổi và reload tự động.
+
+#### b. Manual reload command
+Ngoài ra cũng có thể reload 1 service ngay lập tức bằng cmline (nếu có `reload_service()` trong init script tương ứng):
+```bash
+/etc/init.d/foo reload        # BẮT BUỘC manual reload
+```
+
+Nếu trong init script không có `reload_service()` thì sẽ lấy hàm đó ở trong `rc.common` file:
+```bash
+reload_service() {
+    echo "Explicitly restarting service, are you sure you need this?"
+    stop
+    start
+}
+```
+
+#### c. Signal-based reload 
+**Với procd_send_signal()**
+```bash
+reload_service() {
+    procd_send_signal service_name [instance_name] [signal]
+}
+```
+Với `service_name`: basename của init script, `instance_name`: tên instance tùy chỉnh, `signal`: tên signal. Ví dụ:
+
+```bash
+start_service() {
+    # Instance chính
+    procd_open_instance main
+    procd_set_param command /usr/bin/myservice --config /etc/main.conf
+    procd_close_instance
+    
+    # Instance backup
+    procd_open_instance backup
+    procd_set_param command /usr/bin/myservice --config /etc/backup.conf
+    procd_close_instance
+}
+
+reload_service() {
+    # Reload chỉ instance chính
+    procd_send_signal myservice main HUP
+    
+    # Hoặc reload tất cả
+    # procd_send_signal myservice '*' HUP
+}
+```
+
+**Với reload_signal**
+```bash
+start_service() {
+    procd_open_instance
+    procd_set_param command /usr/bin/myservice
+    
+    # Auto reload với signal khi file thay đổi
+    procd_set_param file /etc/myservice.conf
+    procd_set_param reload_signal HUP
+    
+    procd_close_instance
+}
+```
+Procd theo dõi `/etc/myservice.conf`, khi file thay đổi thì tự động gửi SIGHUP (không cần gọi manual reload)
+
+
+**SỰ KHÁC NHAU GIỮA VIỆC AUTO RELOAD VÀ SIGNAL RELOAD**
+- Auto reload:
+    - procd sẽ gọi `reload_service()`
+    - không gửi signal trực tiếp tới process
+- Signal reload:
+    - procd bỏ qua `reload_service()`
+    - procd gửi signal trực tiếp tới process (process phải có signal handler để reload config)
