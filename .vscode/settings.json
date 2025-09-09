@@ -1,0 +1,9 @@
+{
+    "files.associations": {
+        "callback.h": "c",
+        "invoke.h": "c",
+        "blobmsg_json.h": "c",
+        "main.h": "c",
+        "uloop.h": "c"
+    }
+}
