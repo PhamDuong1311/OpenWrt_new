@@ -1,5 +1,4 @@
-#include "callback.h"
-#include "main.h"
+#include "get_data.h"
 
 void add_monitor_data(monitor_data_t new_data) {
     monitor_node_t *current = monitor_head;

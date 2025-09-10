@@ -1,6 +1,6 @@
 TARGET = main
 
-SRCS = main.c
+SRCS = ubus.c get_data.c main.c 
 
 OBJS = $(SRCS:.c=.o)
 
@@ -11,10 +11,10 @@ DFLAGS = -lubox -lubus
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CC) $(CFLAGS) -o $@ $^  $(DFLAGS)
+	$(CC) -o $@ $^  $(DFLAGS)
 
 %.o: %.c
-	$(CC) $(CFLAGS) -c -o $@ $< 
+	$(CC) -c -o $@ $< 
 
 run:
 	sudo ./$(TARGET)

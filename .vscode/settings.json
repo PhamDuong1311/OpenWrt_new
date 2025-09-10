@@ -4,6 +4,9 @@
         "invoke.h": "c",
         "blobmsg_json.h": "c",
         "main.h": "c",
-        "uloop.h": "c"
+        "uloop.h": "c",
+        "libubus.h": "c",
+        "unistd.h": "c",
+        "get_data.h": "c"
     }
 }

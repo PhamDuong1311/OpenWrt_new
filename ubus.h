@@ -3,7 +3,7 @@
 
 #include "main.h"
 
-int healthmon_add_object();
+extern struct ubus_object get_status;
 
 int get_cpu_temperature(struct ubus_context *ctx, struct ubus_object *obj,
                              struct ubus_request_data *req, const char *method,
