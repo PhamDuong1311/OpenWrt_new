@@ -401,7 +401,7 @@ Procd chờ hết timeout, sau đó khởi động lại service bằng cách g�
 /etc/config/firewall
 /etc/config/dhcp
 ```
-Service sẽ tự động reload nếu có triggers khi `uci commit` (procd biết khi nào config thay đổi qua ubus events)
+Service sẽ không tự động reload mà reload theo **Manual reload command**.
 
 Đối với **Non-UCI config files**:
 ```bash
@@ -411,7 +411,7 @@ Service sẽ tự động reload nếu có triggers khi `uci commit` (procd bi�
 /etc/squid/squid.conf
 /etc/openvpn/server.conf
 ```
-Service sẽ không tự reload mà phải tự **manual reload** sau khi chỉnh sửa (procd không biết khi files này thay đổi)
+Service sẽ không tự reload mà phải tự **Manual reload cho Non-UCI config files** và reload theo **Manual reload command**.
 
 #### a. Manual reload cho Non-UCI config files
 Như đã nói ở trên, một số service sử dụng config files riêng (Non-UCI config files) nên không có events tự động khi config files đó thay đổi, nên cần thêm script để procd theo dõi file thủ công:
@@ -426,7 +426,7 @@ start_service() {
     procd_close_instance
 }
 ```
-Lúc này procd mới có thể biết được khi nào file thay đổi và reload tự động.
+Lúc này procd mới có thể biết được khi nào file thay đổi và reload theo **Manual reload command**
 
 #### b. Manual reload command
 Ngoài ra cũng có thể reload 1 service ngay lập tức bằng cmline (nếu có `reload_service()` trong init script tương ứng):
