@@ -89,18 +89,18 @@ Signal được gửi process cụ thể. Theo em tìm hiểu thì có 2 thằng
 
 Dựa trên bối cảnh OpenWrt, và một số kiến thức nêu trên, em có thể vẽ ra Data flow của procd khi nhận được 1 signal như sau:
 
-![alt text](image/signal_handler.png)
+![alt text](/image/signal_handler.png)
 
 
 ### 2.2 Data flow của procd
 Sau khi trace source code của procd, em có vẽ lại được luồng xử lý của procd chính như sau:
 
-![alt text](image/data_flow_procd.drawio.png)
+![alt text](/image/data_flow_procd.drawio.png)
 
 
 Hoạt động của `procd` được tổ chức gồm các **State machine** được định nghĩa trong các tệp nguồn (đáng chú ý là `/procd/state.c`). Trạng thái `procd` được thay đổi từ trạng thái đầu tiên cho đến trạng thái cuối cùng. Trạng thái hiện tại được đặt trong biến toàn cục state. Trạng thái có thể được thay đổi bằng cách gọi `procd_state_next()`. `procd` bao gồm 6 trạng thái:
 
-![alt text](image/state_machine.drawio.png)
+![alt text](/image/state_machine.drawio.png)
 
 
 ## 3. OpenWrt Init System
@@ -297,7 +297,7 @@ extra_command "status" "Check service status"
 
 ### 3.3 In the boot time, who and how are init scripts called ?
 
-![alt text](image/state_init.drawio.png)
+![alt text](/image/state_init.drawio.png)
 
 Trong boot time, tại **STATE_INIT** chính là nơi các init script được gọi, cụ thể procd đọc `/etc/inittab` tại dòng `::sysinit:/etc/init.d/rcS S boot` (Khởi động sysinit action), trong đó **rcS** không phải là 1 file mà là 1 hàm trong source code `procd/rcS.c`:
 ```c
@@ -388,7 +388,7 @@ procd_set_param respawn ${threshold} ${timeout} ${retry}
 ```
 Với logic kiểm tra như sau:
 
-![alt text](image/restart.drawio.png)
+![alt text](/image/restart.drawio.png)
 
 Procd chờ hết timeout, sau đó khởi động lại service bằng cách gọi `instance_start()` để fork() ra child process mới và reset monitoring.
 

@@ -432,7 +432,7 @@ ubus/
 
 Ví dụ về danh sách object trên Ubus, methods và data signature liên quan của `system`:
 
-![alt text](image/image.png)
+![alt text](/image/image.png)
 
 Bên cạnh đó, có 3 vai trò khác trong Ubus:
 - **Subscriber**: Object đăng ký với target service object. Subscribers sẽ được thông báo khi target service gửi notification đến ubusd.
@@ -443,7 +443,7 @@ Bên cạnh đó, có 3 vai trò khác trong Ubus:
 Có 3 loại sơ đồ truyền dữ liệu để triển khai IPC trong Ubus:
 - **Invoke (One-to-one)**: Gửi dữ liệu hoặc requests đến object cụ thể.
 
-![alt text](image/image-1.png)
+![alt text](/image/image-1.png)
 
 Data flow của invoke:
 - 0. Khởi động UBUS
@@ -454,11 +454,11 @@ Data flow của invoke:
 - 5. Request với object id, method, và dữ liệu cần thiết (msg)
 - 6. Hủy đăng ký object
 
-![alt text](image/invoke.png)
+![alt text](/image/invoke.png)
 
 - **Subcribe/Notify (One-to-many)**: Gửi dữ liệu đến nhiều subscribers đã đăng ký cùng object.
 
-![alt text](image/image-2.png)
+![alt text](/image/image-2.png)
 
 Data flow của invoke:
 - 0. Khởi động UBUS
@@ -470,13 +470,13 @@ Data flow của invoke:
 - 7. Quá trình notification
 - 8. Client 3 unsubscribe với object id
 
-![alt text](image/subscribe.png)
+![alt text](/image/subscribe.png)
 
 - **Event boardcast (One-to-many)**: Gửi dữ liệu đến nhiều listeners của cùng `event pattern`
 
 
 
-![alt text](image/image-3.png)
+![alt text](/image/image-3.png)
 
 Data flow của invoke:
 - 0. Khởi động UBUS
@@ -484,7 +484,7 @@ Data flow của invoke:
 - 2. Receivers đăng ký với ubus event handler(objid:1) với event pattern quan tâm
 - 3. Sender gửi dữ liệu đến ubus event handler(objid:1) với event pattern. Ubus event handler broadcast dữ liệu đến receivers đã đăng ký với cùng event pattern.
 
-![alt text](image/event.png)
+![alt text](/image/event.png)
 
 #### 7.4 UBUS tools
 OpenWrt cung cấp 3 công cụ để truy cập ubus
