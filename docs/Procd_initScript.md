@@ -102,6 +102,9 @@ Hoạt động của `procd` được tổ chức gồm các **State machine** �
 
 ![alt text](/image/state_machine.drawio.png)
 
+### 2.3 All of the procd
+Procd chứa 1 số phần cốt lõi mà chúng làm việc cùng nhau để quản lý toàn bộ hệ thống:
+
 
 ## 3. OpenWrt Init System
 
