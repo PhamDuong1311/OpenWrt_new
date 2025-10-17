@@ -13,7 +13,7 @@ start_service() {
     procd_add_reload_trigger network firewall
 }
 ```
-Service này muốn theo dõi thay đổi file cấu hình UCI `network` và `firewall` thông qua hàm `procd_add_reload_trigger`. Hàm này thực hiện gì ? Khi có sự thay đổi cấu hình (`uci commit ...`), thì nó chỉ ghi cấu hình từ RAM xuống file `/etc/config/network`. Nó không áp dụng thay đổi đó ngay và không sinh ra event nào cho `procd`. Lúc này có 1 service đặc biệt là `ucitrack` - khởi tạo trong init script theo dõi các UCI file (được cấu hình trong `/etc/config/ucitrack`). Khi start `ucitrack`, nó sẽ gọi hàm `reload_config` để chạy lệnh `/sbin/reload_config`:
+Service này muốn theo dõi thay đổi file cấu hình UCI `network` và `firewall` thông qua hàm `procd_add_reload_trigger`. Hàm này thực hiện gì ? Khi có sự thay đổi cấu hình (`uci commit ...`), thì nó chỉ ghi cấu hình từ RAM xuống file `/etc/config/network`. Nó không áp dụng thay đổi đó ngay và không sinh ra event nào cho `procd`. Luc nay, no sẽ gọi hàm `reload_config` để chạy lệnh `/sbin/reload_config`:
 ```sh
 reload_config() {
     uci_apply_defaults
@@ -128,6 +128,67 @@ Bây giờ, LuCI loại bỏ dần Lua đi, Thay vào đó router chỉ trả v�
 
 #### 2. LuCI.form
 
+### B. Cấu trúc thư mục của LuCI
+#### 1. Cấu trúc bên trong feeds/luci/
+```bash
+feeds/luci/
+├── applications/     # Chứa các app mở rộng mà user có thể bật/tắt trong web UI
+├── modules/          # Chứa các module chính của giao diện LuCI (phần khung quản trị) 
+├── collections/      # 
+├── libs/             # Chứa các thư viện dùng chung của LuCI (giống SDK của LuCI)
+├── themes/           # Chứa các theme frontend (HTML, CSS, JS) cho UI (màu sắc, bố cục, )
+└── protocols/        # Chứa các plugin mạng cho LuCI (PPPoE, 6in4, WireGuard...)
+```
+#### 2. Cấu trúc bên trong feeds/luci/modules/
+```bash
+feeds/luci/modules/
+├── luci-base/              # Lõi LuCI: cung cấp thư viện chung, template, dispatcher, i18n...
+├── luci-compat/            # Cho phép các app viết theo API cũ hoạt động trên LuCI mới
+├── luci-mod-network/       # Quản lý mạng: các trang cấu hình mạng (interface, DHCP, wireless)
+├── luci-mod-status/        # Trạng thái hệ thống
+├── luci-mod-system/        # Cấu hình hệ thống: startup, reboot...
+└── luci-mod-rpc/           # RPC API (JSON-RPC, ubus): cung cấp endpoint cho frontend JS gọi qua 
+```
+
+```
+                ┌────────────────────┐
+                │   Web Browser UI   │
+                │ (HTML, JS, CSS)    │
+                └────────┬───────────┘
+                         │  JSON-RPC, HTTP
+                         ▼
+                ┌────────────────────┐
+                │ luci-mod-network   │ ← Sub-module: Network
+                │ luci-mod-system    │ ← Sub-module: System
+                │ luci-mod-status    │ ← Sub-module: Status
+                ├────────────────────┤
+                │ luci-base          │ ← Nền tàng để tất cả luci-mod-* hoạt động 
+                │ luci-compat        │ ← Compatibility
+                │ luci-mod-rpc       │ ← RPC endpoint
+                └────────────────────┘
+```
+
+#### 3. Cấu trúc bên trong 1 module cụ thể (luci-mod-system)
+```bash
+feeds/luci/modules/luci-mod-system/
+├── Makefile
+├── htdocs/
+│   └── luci-static/resources/view/system/
+│       ├── reboot.js
+│       ├── admin.js
+│       └── startup.js
+├── luasrc/
+│   ├── controller/
+│   │   └── system.lua
+│   ├── model/
+│   │   └── cbi/system-admin.lua
+│   └── view/
+│       └── system/
+│           └── reboot.htm
+└── root/
+    └── etc/
+        └── luci-uploads/
+```
 
 ## Reference
 [1] https://openwrt.org/docs/techref/ubus#acls

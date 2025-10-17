@@ -103,9 +103,77 @@ Hoạt động của `procd` được tổ chức gồm các **State machine** �
 ![alt text](/image/state_machine.drawio.png)
 
 ### 2.3 All of the procd
-Procd chứa 1 số phần cốt lõi mà chúng làm việc cùng nhau để quản lý toàn bộ hệ thống:
+Procd là PID 1 - nó khởi động hệ thống, quản lý dịch vụ, xử lý sự kiện kernel (hotplug), quản lý trạng thái, cho phép giao tiếp qua ubus, tất cả phối hợp trong 1 vòng sự kiện (event loop). Procd chứa 1 số phần cốt lõi mà chúng làm việc cùng nhau để quản lý toàn bộ hệ thống:
+1. Init system: Procd như PID 1, chịu trách nhiệm khởi tạo và kết thúc hệ thống
+2. State management: Quản lý chuyển giao system states
+3. Service management: Quản lý các handle về service
+4. System management: Cung cấp interface cho việc điều khiển system
+5. Ubus integration: Cho phép giao tiếp IPC và kiểm soát ngoại
 
+#### a. Init system
+Nó chịu trách nhiệm khởi động toàn bộ hệ thống từ kernel đến trạng thái hoạt động đầy đủ. Nó quản lý early init, xử lý inittab, thực thi các init khởi động:
+1. Early initialization: Khi kernel boot thông qua `/sbin/init`, procd bắt đầu tạo `/proc`, `/sys`, `/dev`, `/tmp` nếu chưa có, thiết lập console output... Khi môi trường cơ bản sẵn sàng, procd chuyển sang trạng thái `STATE_INIT`.
+2. Inittab processing: Đọc file cấu hình `/etc/inittab` và xử lý. Ví dụ đọc 1 dòng trong `/etc/inittab` là `::sysinit:/etc/init.d/rcS S boot`, handler `sysinit` sẽ gọi hàm `runrc()` với tham số `S`. Hàm `runrc()` gọi tới `rcS()` để tìm tất cả các file trong `/etc/rc.d/` khới với pattern `S*` và gọi  (các script này symlink từ `/etc/init.d`).
+3. Init scripts exection: Khởi động toàn bộ dịch vụ hệ thống đã `enable` trong `/etc/rc.d`
 
+#### b. State management
+```shell
+1. `STATE_NONE`
+        |# procd_state_next()
+2. `STATE_EARLY`: init watchdog, setup hotplug (/etc/hotplug.json), run coldplug
+        |# procd_state_next()
+3. `STATE_UBUS`: connect ubus, start ubus service
+        |# procd_state_ubus_connect()
+4. `STATE_INIT`: process inittab, run startup scripts
+        |# procd_state_next()
+5. `STATE_RUNNING`: system fully operational, services running
+        |# procd_shutdown()
+6. `STATE_SHUTDOWN`: run shutdown scripts, sync filesystem
+        |# procd_state_next()
+7. `STATE_HALT`: terminate processes (SIGTERM, SIGKILL), reboot or power off
+        |# reboot/power off
+```
+
+#### c. Ubus integration
+
+![alt text](/image/ubus_integration.png)
+
+Hệ thống ubus là cầu nối giữa procd với các module quản lý khác: hotplug, service, system, container, watchdog... Ngoài ra nó còn là cầu nối giữa daemon trong nền C với LuCI JS. Quay trở lại với procd, procd kết nối với ubus trong giai đoạn `STATE_UBUS` trong quá trình boot sequence. Khi kết nối thành công, procd đăng ký 3 object chính với ubus:
+1. **Hotplug object**: xử lý sự kiện phần cứng như block, button, dhcp, firmware, iface, neigh, net, ntp, tftp, usb. Trong `STATE_RUNNING`, kernel phát hiện ra event, nó gọi 1 hotplug helper, helper này sẽ đóng gói event thành JSON và chuyển nó tới ubus object tương ứng. Lúc này procd lắng nghe thấy event mà nó đã đăng ký từ trước, procd đưa event vào queue, cuối cùng thực thi tất cả các script bên trong `/etc/hotplug.d/.../` mà do src hoặc user định nghĩa (làm gì khi nhận được event hotplug đó)
+
+2. **Service object**: quản lý dịch vụ. Mọi service trong OpenWrt đều là 1 init script trong `/etc/init.d/`. Khi tạo 1 service `/etc/init.d/mydaemon` với `USE_PROCD=1` thì thật ra là đang giao tiếp gián tiếp với `procd daemon` thông qua **Unix socket** (`/var/run/procd.sock`). Khi chạy `/etc/init.d/mydaemon start` => `/etc/rc.common` phân tích lệnh `start`, thấy `USE_PROCD=1` thì nó sẽ import các hàm trong file `/lib/functions/procd.sh` (`procd_*`) => Hàm trong `procd.sh` đóng gói yêu cầu vào JSON và gọi tới `ubus call service add`. Sau khi gọi ubus call nội bộ đó, gói JSON được truyền qua socket tới procd. procd nhận được gói JSON và xử lý (tạo struct serviceservice và fork() ra tiến trình con để quản lý). Sau đó procd gửi thông báo cho các thành phần khác (LuCI, netifd, hotplug...) `ubus_notify` giúp các module khác biết rằng `mydaemon` đã start
+```bash
+ ┌─────────────────────┐
+ │ /etc/init.d/mydaemon│
+ └────────┬────────────┘
+          │
+          ▼
+  /lib/functions/procd.sh
+          │
+          ▼
+JSON message → /var/run/procd.sock
+          │
+          ▼
+     procd daemon
+          │
+          ▼     
+    Service Object  
+          │                
+          ▼               
+     ubus "service" 
+```
+
+3. **System object**: cung cấp API điều khiển hệ thống (reboot, watchdog, signal...) cho user space thông qua ubus. Nó cung cấp 1 số method:
+    - `system.info`: Cung cấp thông tin memory runtime
+    - `system.board`: Cung cấp thông tin phần cứng
+    - `system.reboot`: thực hiện reboot qua state machine **STATE_SHUTDOWN**
+    - `system.signal`: Gửi tín hiệu tới process cụ thể
+    - `system.watchdog`: quản lý hardware watchdog
+    - `system.upgrade`: Flash firmware 
+
+#### d. Service management
+
+#### e. System management
 ## 3. OpenWrt Init System
 
 Giống như nhiều hệ thống dựa trên Linux, OpenWrt sử dụng **hệ thống init** để quản lý việc khởi động, tắt và bảo trì các dịch vụ. Tuy nhiên, thay vì sử dụng các hệ thống phổ biến hơn như `systemd`, OpenWrt dựa vào hệ thống init nhẹ riêng của mình.

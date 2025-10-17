@@ -1,7 +1,7 @@
 # I. Libubox overview
 Libubox gồm nhiều subsystem có thể sủ dụng độc lập hoặc cùng nhau:
 
-![](/image_libubox/core_component.png)
+![](/image/core_component.png)
 
 # II. Core event loop
 Đây là 1 system trong libubox cung cấp 1 framework xử lý event nhanh, hiệu quả 1 cách bất đồng bộ trong OpenWrt. Nó cho phép app có thể giám sát và phản ứng với nhiều nguồn event cùng lúc như **file descriptor**, **process** và **signal** mà không bị blocking hay lãng phí chu kỳ CPU thông qua polling liên tục.
@@ -9,7 +9,7 @@ Libubox gồm nhiều subsystem có thể sủ dụng độc lập hoặc cùng 
 ## 1. Architecture overview
 Uloop event loop được thiết kế phục vụ cho việc xử lý các event nhận được thông qua `epoll()`:
 
-![](/image_libubox/event_loop_archi.png)
+![](/image/event_loop_archi.png)
 
 ## 2. Core event loop components
 Core của event loop là hàm `uloop_run_events()`:
@@ -19,7 +19,7 @@ Core của event loop là hàm `uloop_run_events()`:
 ### a. Event loop initialization and execution
 Event loop phải được khởi tạo trước khi sử dụng và phải được dọn dẹp đúng cách sau đó:
 
-![](/image_libubox/init_event_loop.png)
+![](/image/init_event_loop.png)
 
 ### b. File descriptor handling
 Event loop cho phép monitor các fd để kiểm tra quyền read/write và điều kiện EOF (Có hàm add và delete fd để monitor). Khi event xảy ra trên 1 fd được monitor, callback function được đăng ký trên `struct uloop_fd` được gọi.
@@ -59,14 +59,14 @@ Tham số flag nhận 1 trong 4 loại dưới đây:
 
 ### b. Adding file descriptors to uloop
 Để bắt đầu giám sát 1 file descriptor, cần khởi tạo 1 `struct uloop_fd` và đăng ký nó với uloop:
-![](/image_libubox/add_fd.png)
+![](/image/add_fd.png)
 
 ### c. Handling file descriptor events
 Khi event xảy ra trên fd đã giám sát, uloop gọi hàm callback đã đăng ký với fd, callback sẽ nhận 2 tham số:
 1. Pointer trỏ tới `struct uloop_fd`
 2. Bitfield của event xảy ra (ULOOP_READ, ULOOP_WRITE)
 
-![](/image_libubox/callback_fd.png)
+![](/image/callback_fd.png)
 
 ### d. Remove file descriptor
 Khi hoàn thành việc monitor fd, thì phải remove nó từ uloop bằng sử dụng `uloop_fd_delete()`
@@ -78,7 +78,7 @@ Timers và process handling trong libubox cung cấp:
 3. Process monitoring - Theo dõi child process và nhận thông báo khi exit
 4. Integration with the event loop - Tất cả các hành động sẽ không bị blocking và được tích hợp vào uloop
 
-![](/image_libubox/link_component_uloop.png)
+![](/image/link_component_uloop.png)
 
 ### a. Timer management
 #### One-time timers
@@ -113,6 +113,6 @@ Cơ chế này cho phép theo dõi các child process và nhận thông báo khi
 
 ### Integration with the event loop
 Cả timers và process handlers được tích hợp với hệ thống event loop. Sự tích hợp này xuất hiện trong main loop function `uloop_run_timeout()`
-![](/image_libubox/integration_uloop.png)
+![](/image/integration_uloop.png)
 
 
